@@ -16,27 +16,26 @@ const FLOATING_PILLS = [
   { label: "Web Design",         x: 0,   y: 32  },
   { label: "Video Editing",      x: 333, y: 5   },
   { label: "Content Creation",   x: 667, y: 20  },
-  { label: "Podcast Production", x: 125, y: 105 },
-  { label: "Email Marketing",    x: 513, y: 98  },
-  { label: "Public Relations",   x: 0,   y: 188 },
-  { label: "Social Media",       x: 317, y: 165 },
+  { label: "IoT & Arduino",      x: 125, y: 105 },
+  { label: "Prompt Engineering", x: 513, y: 98  },
+  { label: "REST APIs",          x: 0,   y: 188 },
+  { label: "PWA Development",    x: 317, y: 165 },
   { label: "Content Creation",   x: 667, y: 182 },
   { label: "Event Marketing",    x: 125, y: 265 },
-  { label: "Branding",           x: 497, y: 270 },
+  { label: "UI/UX Design",       x: 497, y: 270 },
 ];
 
-/* Staggered mobile pill positions — alternating left / right-offset rows */
+/* Mobile pill positions — scattered across ~335px usable width, no overlaps */
 const MOBILE_FLOATING_PILLS = [
-  { label: "Web Design",         x: 0,  y: 0   },
-  { label: "Social Media",       x: 65, y: 58  },
-  { label: "Content Creation",   x: 0,  y: 116 },
-  { label: "Video Editing",      x: 65, y: 174 },
-  { label: "Public Relations",   x: 0,  y: 232 },
-  { label: "Podcast Production", x: 65, y: 290 },
-  { label: "Content Creation",   x: 0,  y: 348 },
-  { label: "Email Marketing",    x: 65, y: 406 },
-  { label: "Event Marketing",    x: 0,  y: 464 },
-  { label: "Branding",           x: 65, y: 522 },
+  { label: "Web Design",         x: 14,  y: 8   },
+  { label: "PWA Development",    x: 168, y: 58  },
+  { label: "Content Creation",   x: 22,  y: 115 },
+  { label: "Video Editing",      x: 175, y: 168 },
+  { label: "REST APIs",          x: 18,  y: 228 },
+  { label: "IoT & Arduino",      x: 180, y: 282 },
+  { label: "Prompt Engineering", x: 12,  y: 342 },
+  { label: "Event Marketing",    x: 170, y: 398 },
+  { label: "UI/UX Design",       x: 60,  y: 458 },
 ];
 
 const DESKTOP_PHOTOS = [
@@ -385,8 +384,8 @@ export default function Landing() {
           </p>
         </div>
 
-        {/* Pills — staggered absolute, with float animation */}
-        <div style={{ position: "relative", height: 580, marginLeft: 20 }}>
+        {/* Pills — scattered absolute, matching desktop free-form style */}
+        <div style={{ position: "relative", height: 510 }}>
           {MOBILE_FLOATING_PILLS.map((pill, i) => (
             <div
               key={i}
