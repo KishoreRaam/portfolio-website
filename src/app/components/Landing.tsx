@@ -2,6 +2,10 @@ import React, { useState, useEffect } from "react";
 import cameraImg      from "../../images/camera.png";
 import pointingImg    from "../../images/pointing out.png";
 import professionalImg from "../../images/professional.jpeg";
+import roadSOSImg     from "../../images/roadsos.png";
+import studentsHubImg from "../../images/studentshub.png";
+import bloodLinkImg   from "../../images/bloodlink.png";
+import muleImg        from "../../images/mule.png";
 import { ExpandingCards } from "./ui/expanding-cards";
 import type { CardItem } from "./ui/expanding-cards";
 import { BookOpen, Heart, AlertTriangle, ShieldCheck } from "lucide-react";
@@ -48,7 +52,8 @@ const PROJECTS: CardItem[] = [
     tag: "PWA · Emergency",
     year: "2026",
     description: "One-tap SOS for road accident victims — real-time location sharing to nearby responders. Offline-first PWA, no install required.",
-    imgSrc: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='800'%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c2d00'/%3E%3Cstop offset='1' stop-color='%23c44b00'/%3E%3C%2FlinearGradient%3E%3Crect width='1200' height='800' fill='url(%23g)'/%3E%3C/svg%3E",
+    imgSrc: roadSOSImg,
+    url: "https://emergency-response-dashboard-iota.vercel.app/home",
     icon: <AlertTriangle size={26} />,
   },
   {
@@ -57,7 +62,8 @@ const PROJECTS: CardItem[] = [
     tag: "Web App · React",
     year: "2025",
     description: "Centralized platform for students to discover resources, tools and opportunities. Won PitchFest 2025 — advanced to Smart India Hackathon as Team Learnex.",
-    imgSrc: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='800'%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%230f2d5f'/%3E%3Cstop offset='1' stop-color='%231a5fa0'/%3E%3C%2FlinearGradient%3E%3Crect width='1200' height='800' fill='url(%23g)'/%3E%3C/svg%3E",
+    imgSrc: studentsHubImg,
+    url: "https://studentperks.in",
     icon: <BookOpen size={26} />,
   },
   {
@@ -66,7 +72,8 @@ const PROJECTS: CardItem[] = [
     tag: "Full Stack · Appwrite",
     year: "2025",
     description: "Real-time blood donor matching with inventory management and emergency request handling. Reduces manual coordination overhead between donors and recipients.",
-    imgSrc: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='800'%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c0a0a'/%3E%3Cstop offset='1' stop-color='%23b52020'/%3E%3C%2FlinearGradient%3E%3Crect width='1200' height='800' fill='url(%23g)'/%3E%3C/svg%3E",
+    imgSrc: bloodLinkImg,
+    url: "https://bloodlink-beryl.vercel.app/",
     icon: <Heart size={26} />,
   },
   {
@@ -75,7 +82,8 @@ const PROJECTS: CardItem[] = [
     tag: "ML · Python",
     year: "2025",
     description: "End-to-end ML pipeline for flagging fraudulent transactions — risk scoring, classification models, and anomaly detection with a web-accessible result interface.",
-    imgSrc: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='800'%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%230a2d2d'/%3E%3Cstop offset='1' stop-color='%23146060'/%3E%3C%2FlinearGradient%3E%3Crect width='1200' height='800' fill='url(%23g)'/%3E%3C/svg%3E",
+    imgSrc: muleImg,
+    url: "https://cross-mule.vercel.app/",
     icon: <ShieldCheck size={26} />,
   },
 ];
@@ -300,12 +308,12 @@ export default function Landing() {
 
             <div style={{ display: "flex", flexDirection: "column", gap: 40 }}>
               <h1 className="averia-serif-libre-bold" style={{ fontSize: 128, lineHeight: 0.95, color: "#000", fontWeight: "normal", margin: 0 }}>
-                We're a<br />megaphone<br />for your<br />business
+                I make things.<br />Sometimes code.<br />Sometimes art.
               </h1>
               <p style={{ color: "#4A4A4A", fontSize: 17, lineHeight: 1.6, maxWidth: 660, margin: 0 }}>
-                Whatever you're doing, we turn the volume up. Your brand's unique story, voice and
-                what sets you apart won't be drowned out. You get to engage the right audience and
-                drive growth. Partner with us to create a captivating online presence. We can help with...
+                I'm Raam. By day I'm writing code, shipping products, and debugging things that shouldn't 
+                have broken. By evening I'm behind a camera or in an edit timeline. I've always believed 
+                the people who build things should also know how to make them beautiful — so I never stopped doing both..
               </p>
             </div>
 
@@ -365,16 +373,15 @@ export default function Landing() {
         {/* Heading */}
         <div style={{ padding: "28px 20px 20px" }}>
           <h1 className="averia-serif-libre-bold" style={{ fontSize: 54, lineHeight: 0.95, color: "#000", fontWeight: "normal", margin: 0 }}>
-            We're a<br />megaphone<br />for your<br />business
+            I make things.<br />Sometimes code.<br />Sometimes art.
           </h1>
         </div>
 
         {/* Subtitle */}
         <div style={{ padding: "0 20px 28px" }}>
           <p style={{ color: "#4A4A4A", fontSize: 15, lineHeight: 1.7, margin: 0 }}>
-            Whatever you're doing, we turn the volume up. Your brand's unique story, voice and
-            what sets you apart won't be drowned out. You get to engage the right audience and
-            drive growth. Partner with us to create a captivating online presence. We can help with...
+            I'm Raam — I build software, shoot photos, cut videos, and write things worth reading. Whatever the medium,
+            the obsession is the same.
           </p>
         </div>
 

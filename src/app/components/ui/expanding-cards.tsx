@@ -12,6 +12,7 @@ export interface CardItem {
   icon: React.ReactNode;
   tag: string;
   year: string;
+  url?: string;
 }
 
 interface ExpandingCardsProps {
@@ -126,6 +127,10 @@ export function ExpandingCards({ items }: ExpandingCardsProps) {
 
   /* ── Shared card click handler ── */
   const handleCardClick = (i: number) => {
+    if (active === i && items[i].url) {
+      window.open(items[i].url, "_blank", "noopener,noreferrer");
+      return;
+    }
     setActive(i);
     const row = rowRef.current;
     if (!row) return;
@@ -174,7 +179,23 @@ export function ExpandingCards({ items }: ExpandingCardsProps) {
         transition: "opacity 0.4s ease 0.15s",
         pointerEvents: "none",
       }}>
-        <div style={{ color: "rgba(255,255,255,0.9)" }}>{item.icon}</div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ color: "rgba(255,255,255,0.9)" }}>{item.icon}</div>
+          {item.url && (
+            <div style={{
+              width: 32, height: 32, borderRadius: "50%",
+              backgroundColor: "rgba(255,255,255,0.12)",
+              border: "1px solid rgba(255,255,255,0.2)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+            </div>
+          )}
+        </div>
         <span style={{
           display: "inline-block", width: "fit-content",
           backgroundColor: "rgba(213,230,54,0.18)", color: "#D5E636",
