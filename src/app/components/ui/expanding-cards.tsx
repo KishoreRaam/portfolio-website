@@ -1,8 +1,11 @@
 import * as React from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { HEADING_GLYPHS, HEADING_VIEWBOX } from "./headingPaths";
 
 gsap.registerPlugin(ScrollTrigger);
+
+const HEAD_LINES = ["Projects that", "speak for", "themselves"];
 
 export interface CardItem {
   id: string | number;
@@ -21,8 +24,14 @@ interface ExpandingCardsProps {
 
 export function ExpandingCards({ items }: ExpandingCardsProps) {
   const trackRef = React.useRef<HTMLDivElement>(null);
+  const pinRef   = React.useRef<HTMLDivElement>(null);
   const rowRef   = React.useRef<HTMLDivElement>(null);
   const cardRefs = React.useRef<(HTMLDivElement | null)[]>([]);
+  const headPathRefs = React.useRef<(SVGPathElement | null)[]>([]);
+  const headFillRef   = React.useRef<SVGGElement>(null);
+  const lensRef       = React.useRef<number[]>([]);
+  const totalLenRef   = React.useRef(0);
+  const reducedRef    = React.useRef(false);
   const [active, setActive] = React.useState(0);
 
   const [isDesktop, setIsDesktop] = React.useState(
@@ -34,6 +43,52 @@ export function ExpandingCards({ items }: ExpandingCardsProps) {
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
+
+  // The pinned scroll is split: the first slice writes the heading, the rest
+  // steps through the cards. So 1 of every (items + 1) viewports is the heading.
+  const WRITE_FRACTION = 1 / (items.length + 1);
+
+  // Measure each line-path's outline length and prime it as fully "unwritten"
+  // (dash gap covering the whole path). Lengths are in viewBox units, so they're
+  // independent of the rendered size — measured once.
+  React.useLayoutEffect(() => {
+    const paths = headPathRefs.current.filter(Boolean) as SVGPathElement[];
+    if (!paths.length) return;
+    const lens = paths.map((p) => p.getTotalLength());
+    lensRef.current = lens;
+    totalLenRef.current = lens.reduce((a, b) => a + b, 0);
+    reducedRef.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reducedRef.current) {
+      paths.forEach((p, i) => gsap.set(p, { strokeDasharray: lens[i], strokeDashoffset: 0 }));
+      if (headFillRef.current) gsap.set(headFillRef.current, { opacity: 1 });
+      return;
+    }
+    paths.forEach((p, i) => gsap.set(p, { strokeDasharray: lens[i], strokeDashoffset: lens[i] }));
+    if (headFillRef.current) gsap.set(headFillRef.current, { opacity: 0 });
+  }, []);
+
+  // Drive the heading from the pin's progress (0 → WRITE_FRACTION). The pen
+  // traces real glyph outlines via strokeDashoffset, line after line at a
+  // constant speed; once written, the fill cross-fades in.
+  const drawHeading = React.useCallback((progress: number) => {
+    if (reducedRef.current) return;
+    const paths = headPathRefs.current;
+    const lens  = lensRef.current;
+    const total = totalLenRef.current;
+    if (!total || paths.length !== lens.length) return;
+    const hp    = gsap.utils.clamp(0, 1, progress / WRITE_FRACTION);
+    const drawn = hp * total;                                  // length written so far
+    let acc = 0;
+    for (let i = 0; i < paths.length; i++) {
+      const p = paths[i];
+      if (!p) continue;
+      const local = gsap.utils.clamp(0, lens[i], drawn - acc);
+      gsap.set(p, { strokeDashoffset: lens[i] - local });
+      acc += lens[i];
+    }
+    const fillP = gsap.utils.clamp(0, 1, (hp - 0.85) / 0.15); // fill reveal tail
+    if (headFillRef.current) gsap.set(headFillRef.current, { opacity: fillP });
+  }, [WRITE_FRACTION]);
 
   /* ── Desktop: horizontal sticky scroll ── */
   React.useEffect(() => {
@@ -65,8 +120,14 @@ export function ExpandingCards({ items }: ExpandingCardsProps) {
       trigger: track,
       start: "top top",
       end: "bottom bottom",
+      pin: pinRef.current,
+      pinSpacing: false,
+      pinType: "transform",
+      anticipatePin: 1,
       onUpdate(self) {
-        const step = Math.min(Math.floor(self.progress * items.length), items.length - 1);
+        drawHeading(self.progress);
+        const cardP = (self.progress - WRITE_FRACTION) / (1 - WRITE_FRACTION);
+        const step = Math.min(Math.floor(Math.max(cardP, 0) * items.length), items.length - 1);
         if (step === prev) return;
         prev = step;
         setActive(step);
@@ -110,8 +171,14 @@ export function ExpandingCards({ items }: ExpandingCardsProps) {
       trigger: track,
       start: "top top",
       end: "bottom bottom",
+      pin: pinRef.current,
+      pinSpacing: false,
+      pinType: "transform",
+      anticipatePin: 1,
       onUpdate(self) {
-        const step = Math.min(Math.floor(self.progress * items.length), items.length - 1);
+        drawHeading(self.progress);
+        const cardP = (self.progress - WRITE_FRACTION) / (1 - WRITE_FRACTION);
+        const step = Math.min(Math.floor(Math.max(cardP, 0) * items.length), items.length - 1);
         if (step === prev) return;
         prev = step;
         setActive(step);
@@ -222,15 +289,21 @@ export function ExpandingCards({ items }: ExpandingCardsProps) {
   );
 
   /* ──────────────────── RENDER ──────────────────── */
+  // The heading is real Young Serif glyph outlines (generated into headingPaths.ts).
+  // The viewBox keeps its intrinsic aspect ratio; we set an explicit width and
+  // let height follow the viewBox so nothing overflows / gets clipped.
+  const headW      = isDesktop ? 560 : "88%";
+  const headStroke = 2.6; // in viewBox units (font generated at 100u) — handwriting weight
+
   return (
     <div
       ref={trackRef}
-      style={{ height: `${items.length * 100}vh`, backgroundColor: "#0F0F0F" }}
+      style={{ height: `${(items.length + 1) * 100}vh`, backgroundColor: "#0F0F0F" }}
     >
       <div
+        ref={pinRef}
         style={{
-          position: "sticky",
-          top: 0,
+          position: "relative",
           height: "100vh",
           display: "flex",
           flexDirection: "column",
@@ -241,23 +314,36 @@ export function ExpandingCards({ items }: ExpandingCardsProps) {
           boxSizing: "border-box",
         }}
       >
-        {/* Heading */}
-        <div style={{ marginBottom: isDesktop ? 40 : 24, flexShrink: 0 }}>
+        {/* Heading — written by the stroke during the first scroll slice (Phase 4) */}
+        <div style={{ marginBottom: isDesktop ? 36 : 22, flexShrink: 0 }}>
           <p style={{
             fontSize: isDesktop ? 12 : 11, fontWeight: 700, letterSpacing: 3,
             color: "#555", textTransform: "uppercase",
-            marginBottom: isDesktop ? 14 : 10, fontFamily: "Inter, sans-serif",
+            margin: "0 0 16px", fontFamily: "Inter, sans-serif",
           }}>
             Selected Work
           </p>
-          <h2 style={{
-            fontFamily: "'Young Serif', serif",
-            fontSize: isDesktop ? 72 : 42,
-            lineHeight: 0.95, color: "#F0EBE3",
-            fontWeight: "normal", margin: 0,
-          }}>
-            Projects that<br />speak for<br />themselves
-          </h2>
+          <svg
+            viewBox={HEADING_VIEWBOX}
+            preserveAspectRatio="xMinYMid meet"
+            style={{ width: headW, height: "auto", maxWidth: "100%", overflow: "visible", display: "block" }}
+            role="img"
+            aria-label={HEAD_LINES.join(" ")}
+          >
+            {/* Fill layer — sits under the stroke, faded in once writing finishes */}
+            <g ref={headFillRef} fill="#f0ede6" stroke="none" style={{ opacity: 0 }}>
+              {HEADING_GLYPHS.map((d, i) => (
+                <path key={`f${i}`} d={d} />
+              ))}
+            </g>
+            {/* Stroke (written) layer — the pen traces each glyph outline in order.
+                Butt caps: undrawn glyphs render nothing (no stray round-cap dots). */}
+            <g fill="none" stroke="#ffffff" strokeWidth={headStroke} strokeLinecap="butt" strokeLinejoin="round">
+              {HEADING_GLYPHS.map((d, i) => (
+                <path key={`s${i}`} ref={(el) => { headPathRefs.current[i] = el; }} d={d} />
+              ))}
+            </g>
+          </svg>
         </div>
 
         {/* Cards row (desktop) / column (mobile) */}

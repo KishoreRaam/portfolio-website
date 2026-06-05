@@ -8,7 +8,14 @@ import bloodLinkImg   from "../../images/bloodlink.png";
 import muleImg        from "../../images/mule.png";
 import { ExpandingCards } from "./ui/expanding-cards";
 import type { CardItem } from "./ui/expanding-cards";
+import { HeroVisual } from "./HeroVisual";
+import { TransitionBand } from "./TransitionBand";
 import { BookOpen, Heart, AlertTriangle, ShieldCheck } from "lucide-react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ScrollSmoother } from "gsap/ScrollSmoother";
+
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
 
 const NAV_LINKS = ["about", "work", "skills", "contact"];
 
@@ -277,26 +284,49 @@ function MobilePill({ children }: { children: string }) {
   );
 }
 
-/* ─── Swirl SVG ─── */
-function SwirlDecoration() {
-  return (
-    <>
-      <svg style={{ position: "absolute", top: 50, left: -30, width: 460, height: 1100, pointerEvents: "none", zIndex: 5 }} viewBox="0 0 460 1100" fill="none">
-        <path d="M400 30 C360 120, 40 160, 70 320 C100 480, 400 420, 370 600 C340 780, 40 760, 100 920 C160 1080, 390 1030, 370 1080" stroke="white" strokeWidth="6" strokeLinecap="round" fill="none" />
-      </svg>
-      <svg style={{ position: "absolute", top: 90, left: -50, width: 500, height: 1050, pointerEvents: "none", zIndex: 5 }} viewBox="0 0 500 1050" fill="none">
-        <path d="M450 60 C410 150, 80 200, 110 360 C140 520, 440 470, 410 650 C380 830, 80 810, 150 970 C200 1070, 420 1010, 400 1040" stroke="white" strokeWidth="4" strokeLinecap="round" fill="none" />
-      </svg>
-    </>
-  );
-}
-
 /* ─── Page ─── */
 export default function Landing() {
-  return (
-    <div style={{ backgroundColor: "#F0EBE3", fontFamily: "Inter, sans-serif", minHeight: "100vh" }}>
+  const mobileSwirlRefs = React.useRef<(SVGPathElement | null)[]>([]);
 
+  // Smooth scrolling — the scroll position eases toward the user's input,
+  // and all ScrollTrigger animations stay in sync. Skipped for reduced motion.
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const smoother = ScrollSmoother.create({
+      wrapper: "#smooth-wrapper",
+      content: "#smooth-content",
+      smooth: 1.8,
+      effects: true,
+    });
+    return () => { smoother.kill(); };
+  }, []);
+
+  // Mobile hero swirls draw themselves as the photo strip scrolls in.
+  useEffect(() => {
+    if (window.innerWidth >= 768) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const paths = mobileSwirlRefs.current.filter(Boolean) as SVGPathElement[];
+    const ctx = gsap.context(() => {
+      paths.forEach((p) => {
+        const len = p.getTotalLength();
+        gsap.set(p, { strokeDasharray: len, strokeDashoffset: len });
+        gsap.to(p, {
+          strokeDashoffset: 0,
+          ease: "none",
+          scrollTrigger: { trigger: p, start: "top 95%", end: "top 45%", scrub: 1 },
+        });
+      });
+    });
+    return () => ctx.revert();
+  }, []);
+
+  return (
+    <>
+      {/* Navbar lives outside #smooth-content so position:fixed stays anchored to the viewport */}
       <Navbar />
+      <div id="smooth-wrapper">
+        <div id="smooth-content">
+          <div style={{ backgroundColor: "#EDEDE5", fontFamily: "Inter, sans-serif" }}>
 
       {/* ════ DESKTOP ════ */}
       <div className="hidden md:block" style={{ maxWidth: 1440, margin: "0 auto", paddingTop: 100 }}>
@@ -341,15 +371,8 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Right column — photos */}
-          <div style={{ width: 380, flexShrink: 0, position: "relative", height: 1340, overflow: "visible" }}>
-            {DESKTOP_PHOTOS.map((photo, i) => (
-              <img key={i} src={photo.src} alt={`Portfolio ${i + 1}`}
-                style={{ position: "absolute", width: photo.w, height: photo.h, top: photo.top, left: photo.left, borderRadius: 20, objectFit: "cover", zIndex: 10 }}
-              />
-            ))}
-            <SwirlDecoration />
-          </div>
+          {/* Right column — photos + scroll-drawn river (Phase 1 & 2) */}
+          <HeroVisual photos={DESKTOP_PHOTOS} />
 
         </div>
       </div>
@@ -364,8 +387,8 @@ export default function Landing() {
           ))}
           {/* Swirl over photos */}
           <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }} viewBox="0 0 375 135" fill="none" preserveAspectRatio="none">
-            <path d="M-10 110 C50 10, 140 120, 220 40 C300 -40, 370 90, 400 30" stroke="white" strokeWidth="3.5" strokeLinecap="round" fill="none" />
-            <path d="M-10 80 C60 -20, 160 100, 245 20 C330 -60, 385 60, 410 5" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none" />
+            <path ref={(el) => { mobileSwirlRefs.current[0] = el; }} d="M-10 110 C50 10, 140 120, 220 40 C300 -40, 370 90, 400 30" stroke="white" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+            <path ref={(el) => { mobileSwirlRefs.current[1] = el; }} d="M-10 80 C60 -20, 160 100, 245 20 C330 -60, 385 60, 410 5" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none" />
           </svg>
         </div>
 
@@ -414,11 +437,20 @@ export default function Landing() {
         </div>
 
       </div>
-      {/* ════ WORK SECTION ════ */}
-      <section id="work">
-        <ExpandingCards items={PROJECTS} />
-      </section>
+      {/* ════ DARK REGION — transition + work share one backdrop (no seam) ════ */}
+      <div style={{ backgroundColor: "#0F0F0F" }}>
+        {/* Cream → dark colour transition */}
+        <TransitionBand />
 
-    </div>
+        {/* Work section — heading signs, then the cards reveal */}
+        <section id="work">
+          <ExpandingCards items={PROJECTS} />
+        </section>
+      </div>
+
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
