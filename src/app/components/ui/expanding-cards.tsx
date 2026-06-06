@@ -142,55 +142,7 @@ export function ExpandingCards({ items }: ExpandingCardsProps) {
     return () => { st.kill(); window.removeEventListener("resize", onResize); };
   }, [isDesktop, items.length]);
 
-  /* ── Mobile: vertical sticky scroll ── */
-  React.useEffect(() => {
-    if (isDesktop) return;
-    const track = trackRef.current;
-    const row   = rowRef.current;
-    if (!track || !row) return;
-
-    const cards = cardRefs.current.filter(Boolean) as HTMLDivElement[];
-    if (cards.length !== items.length) return;
-
-    const INACTIVE = 52;
-    const GAP      = 8;
-    const getActiveH = () =>
-      row.offsetHeight - (items.length - 1) * (INACTIVE + GAP);
-
-    const initHeights = () => {
-      const ah = getActiveH();
-      cards.forEach((c, i) => gsap.set(c, { height: i === 0 ? ah : INACTIVE }));
-    };
-    initHeights();
-
-    const qh = cards.map((c) =>
-      gsap.quickTo(c, "height", { duration: 0.65, ease: "power3.inOut" }),
-    );
-
-    let prev = 0;
-    const st = ScrollTrigger.create({
-      trigger: track,
-      start: "top top",
-      end: "bottom bottom",
-      pin: pinRef.current,
-      pinSpacing: false,
-      pinType: "transform",
-      anticipatePin: 1,
-      onUpdate(self) {
-        const cardP = (self.progress - WRITE_FRACTION) / (1 - WRITE_FRACTION);
-        const step = Math.min(Math.floor(Math.max(cardP, 0) * items.length), items.length - 1);
-        if (step === prev) return;
-        prev = step;
-        setActive(step);
-        const ah = getActiveH();
-        cards.forEach((_, i) => qh[i](i === step ? ah : INACTIVE));
-      },
-    });
-
-    const onResize = () => { initHeights(); ScrollTrigger.refresh(); };
-    window.addEventListener("resize", onResize);
-    return () => { st.kill(); window.removeEventListener("resize", onResize); };
-  }, [isDesktop, items.length]);
+  /* ── Mobile: no animation ── */
 
   /* ── Shared card click handler ── */
   const handleCardClick = (i: number) => {
@@ -289,11 +241,50 @@ export function ExpandingCards({ items }: ExpandingCardsProps) {
   );
 
   /* ──────────────────── RENDER ──────────────────── */
-  // The heading is real Young Serif glyph outlines (generated into headingPaths.ts).
-  // The viewBox keeps its intrinsic aspect ratio; we set an explicit width and
-  // let height follow the viewBox so nothing overflows / gets clipped.
-  const headW      = isDesktop ? 560 : "88%";
-  const headStroke = 2.6; // in viewBox units (font generated at 100u) — handwriting weight
+  const headStroke = 2.6;
+
+  /* ── Mobile static list ── */
+  if (!isDesktop) {
+    return (
+      <div style={{ backgroundColor: "#0F0F0F", padding: "56px 20px 72px" }}>
+        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "3px", color: "#555", textTransform: "uppercase", margin: "0 0 18px", fontFamily: "Inter, sans-serif" }}>
+          Selected Work
+        </p>
+        <h2 style={{ fontFamily: "'Young Serif', serif", fontSize: 38, fontWeight: 400, color: "#f0ede6", lineHeight: 1.1, margin: "0 0 44px" }}>
+          Projects that speak for themselves
+        </h2>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {items.map((item, i) => (
+            <a
+              key={item.id}
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: "block", textDecoration: "none", paddingTop: i === 0 ? 0 : 36, paddingBottom: 36, borderBottom: i < items.length - 1 ? "1px solid rgba(255,255,255,0.07)" : "none" }}
+            >
+              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}>
+                <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 11, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "Inter, sans-serif" }}>
+                  {String(i + 1).padStart(2, "0")} — {item.tag}
+                </span>
+                <span style={{ color: "#D5E636", fontSize: 11, fontFamily: "Inter, sans-serif", letterSpacing: "1px" }}>{item.year}</span>
+              </div>
+              <h3 style={{ color: "#fff", fontSize: 28, fontFamily: "'Young Serif', serif", fontWeight: 400, margin: "0 0 14px", lineHeight: 1.1 }}>
+                {item.title}
+              </h3>
+              <div style={{ borderRadius: 12, overflow: "hidden", height: 200, marginBottom: 14 }}>
+                <img src={item.imgSrc} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              </div>
+              <p style={{ color: "rgba(255,255,255,0.48)", fontSize: 13, lineHeight: 1.7, fontFamily: "Inter, sans-serif", margin: 0 }}>
+                {item.description}
+              </p>
+            </a>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const headW = 560;
 
   return (
     <div

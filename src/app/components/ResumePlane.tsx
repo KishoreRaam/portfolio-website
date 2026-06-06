@@ -45,64 +45,60 @@ export function ResumePlane() {
     const core   = pathCoreRef.current!;
     const top    = pathTopRef.current!;
     const bottom = pathBotRef.current!;
+    const isMobile = window.innerWidth < 768;
 
     const coreLen = core.getTotalLength();
     const topLen  = top.getTotalLength();
     const botLen  = bottom.getTotalLength();
 
-    /* ── Initialise trails as invisible ── */
     gsap.set(core,   { strokeDasharray: coreLen,  strokeDashoffset: coreLen  });
     gsap.set(top,    { strokeDasharray: topLen,   strokeDashoffset: topLen   });
     gsap.set(bottom, { strokeDasharray: botLen,   strokeDashoffset: botLen   });
 
-    /* ── Pre-position plane at path start so reversal is clean ── */
     gsap.set(planeRef.current, {
-      motionPath: {
-        path: core,
-        align: core,
-        alignOrigin: [0.5, 0.5],
-        autoRotate: true,
-        start: 0,
-        end: 0,
-      },
+      motionPath: { path: core, align: core, alignOrigin: [0.5, 0.5], autoRotate: true, start: 0, end: 0 },
     });
     gsap.set(textRef.current, { autoAlpha: 0 });
 
-    /* ── Pinned scroll-driven timeline ── */
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: "top top",
-        end: "+=150%",       // 1.5 viewport-heights of scroll budget
-        pin: true,
-        scrub: true,
-        anticipatePin: 1,
-        invalidateOnRefresh: true,
-      },
-    });
+    const motionVars = {
+      motionPath: { path: core, align: core, alignOrigin: [0.5, 0.5], autoRotate: true },
+    };
 
-    /* All tweens share duration:2 + ease:none so they stay in sync. */
-    tl.to(
-      planeRef.current,
-      {
-        motionPath: {
-          path: core,
-          align: core,
-          alignOrigin: [0.5, 0.5],
-          autoRotate: true,
+    let tl: gsap.core.Timeline;
+
+    if (isMobile) {
+      /* ── Mobile: plays once when section scrolls into view ── */
+      tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: "top 75%",
+          toggleActions: "play none none none",
         },
-        ease: "none",
-        duration: 2,
-      },
-      0
-    );
-
-    tl.to(core,   { strokeDashoffset: 0, ease: "none", duration: 2 }, 0);
-    tl.to(top,    { strokeDashoffset: 0, ease: "none", duration: 2 }, 0);
-    tl.to(bottom, { strokeDashoffset: 0, ease: "none", duration: 2 }, 0);
-
-    /* Text fades in at the halfway point */
-    tl.to(textRef.current, { autoAlpha: 1, ease: "none", duration: 0.3 }, 1.0);
+      });
+      tl.to(planeRef.current, { ...motionVars, ease: "power1.inOut", duration: 2.4 }, 0);
+      tl.to(core,   { strokeDashoffset: 0, ease: "power1.inOut", duration: 2.4 }, 0);
+      tl.to(top,    { strokeDashoffset: 0, ease: "power1.inOut", duration: 2.4 }, 0);
+      tl.to(bottom, { strokeDashoffset: 0, ease: "power1.inOut", duration: 2.4 }, 0);
+      tl.to(textRef.current, { autoAlpha: 1, ease: "power2.out", duration: 0.5 }, 1.6);
+    } else {
+      /* ── Desktop: pinned scroll-scrubbed timeline ── */
+      tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: "top top",
+          end: "+=150%",
+          pin: true,
+          scrub: true,
+          anticipatePin: 1,
+          invalidateOnRefresh: true,
+        },
+      });
+      tl.to(planeRef.current, { ...motionVars, ease: "none", duration: 2 }, 0);
+      tl.to(core,   { strokeDashoffset: 0, ease: "none", duration: 2 }, 0);
+      tl.to(top,    { strokeDashoffset: 0, ease: "none", duration: 2 }, 0);
+      tl.to(bottom, { strokeDashoffset: 0, ease: "none", duration: 2 }, 0);
+      tl.to(textRef.current, { autoAlpha: 1, ease: "none", duration: 0.3 }, 1.0);
+    }
 
     return () => {
       tl.scrollTrigger?.kill();

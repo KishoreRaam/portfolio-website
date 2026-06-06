@@ -288,8 +288,6 @@ function MobilePill({ children }: { children: string }) {
 
 /* ─── Page ─── */
 export default function Landing() {
-  const mobileSwirlRefs = React.useRef<(SVGPathElement | null)[]>([]);
-
   // Smooth scrolling — the scroll position eases toward the user's input,
   // and all ScrollTrigger animations stay in sync. Skipped for reduced motion.
   useEffect(() => {
@@ -301,25 +299,6 @@ export default function Landing() {
       effects: true,
     });
     return () => { smoother.kill(); };
-  }, []);
-
-  // Mobile hero swirls draw themselves as the photo strip scrolls in.
-  useEffect(() => {
-    if (window.innerWidth >= 768) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const paths = mobileSwirlRefs.current.filter(Boolean) as SVGPathElement[];
-    const ctx = gsap.context(() => {
-      paths.forEach((p) => {
-        const len = p.getTotalLength();
-        gsap.set(p, { strokeDasharray: len, strokeDashoffset: len });
-        gsap.to(p, {
-          strokeDashoffset: 0,
-          ease: "none",
-          scrollTrigger: { trigger: p, start: "top 95%", end: "top 45%", scrub: 1 },
-        });
-      });
-    });
-    return () => ctx.revert();
   }, []);
 
   return (
@@ -382,15 +361,14 @@ export default function Landing() {
       {/* ════ MOBILE ════ */}
       <div className="flex flex-col md:hidden" style={{ paddingTop: 80 }}>
 
-        {/* Photo strip — 3 images side by side with swirl overlay */}
+        {/* Photo strip — 3 images side by side with static swirl overlay */}
         <div style={{ position: "relative", display: "flex", width: "100%", height: 135, overflow: "hidden" }}>
           {[cameraImg, pointingImg, professionalImg].map((src, i) => (
             <img key={i} src={src} alt="" style={{ flex: 1, height: "100%", objectFit: "cover" }} />
           ))}
-          {/* Swirl over photos */}
           <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }} viewBox="0 0 375 135" fill="none" preserveAspectRatio="none">
-            <path ref={(el) => { mobileSwirlRefs.current[0] = el; }} d="M-10 110 C50 10, 140 120, 220 40 C300 -40, 370 90, 400 30" stroke="white" strokeWidth="3.5" strokeLinecap="round" fill="none" />
-            <path ref={(el) => { mobileSwirlRefs.current[1] = el; }} d="M-10 80 C60 -20, 160 100, 245 20 C330 -60, 385 60, 410 5" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none" />
+            <path d="M-10 110 C50 10, 140 120, 220 40 C300 -40, 370 90, 400 30" stroke="white" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+            <path d="M-10 80 C60 -20, 160 100, 245 20 C330 -60, 385 60, 410 5" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none" />
           </svg>
         </div>
 
@@ -414,12 +392,7 @@ export default function Landing() {
           {MOBILE_FLOATING_PILLS.map((pill, i) => (
             <div
               key={i}
-              style={{
-                position: "absolute",
-                left: pill.x,
-                top: pill.y,
-                animation: `pillFloat ${3.0 + (i % 5) * 0.45}s ease-in-out ${(i % 4) * 0.55}s infinite`,
-              }}
+              style={{ position: "absolute", left: pill.x, top: pill.y }}
             >
               <MobilePill>{pill.label}</MobilePill>
             </div>
