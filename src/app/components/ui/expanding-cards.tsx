@@ -58,14 +58,15 @@ export function ExpandingCards({ items }: ExpandingCardsProps) {
     lensRef.current = lens;
     totalLenRef.current = lens.reduce((a, b) => a + b, 0);
     reducedRef.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reducedRef.current) {
+    // On mobile or reduced-motion: show heading fully drawn immediately, no animation.
+    if (reducedRef.current || !isDesktop) {
       paths.forEach((p, i) => gsap.set(p, { strokeDasharray: lens[i], strokeDashoffset: 0 }));
       if (headFillRef.current) gsap.set(headFillRef.current, { opacity: 1 });
       return;
     }
     paths.forEach((p, i) => gsap.set(p, { strokeDasharray: lens[i], strokeDashoffset: lens[i] }));
     if (headFillRef.current) gsap.set(headFillRef.current, { opacity: 0 });
-  }, []);
+  }, [isDesktop]);
 
   // Drive the heading from the pin's progress (0 → WRITE_FRACTION). The pen
   // traces real glyph outlines via strokeDashoffset, line after line at a
@@ -176,7 +177,6 @@ export function ExpandingCards({ items }: ExpandingCardsProps) {
       pinType: "transform",
       anticipatePin: 1,
       onUpdate(self) {
-        drawHeading(self.progress);
         const cardP = (self.progress - WRITE_FRACTION) / (1 - WRITE_FRACTION);
         const step = Math.min(Math.floor(Math.max(cardP, 0) * items.length), items.length - 1);
         if (step === prev) return;

@@ -19,4 +19,9 @@ export default defineConfig({
 
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ['**/*.svg', '**/*.csv'],
+
+  // pdfjs-dist ships ESM with dynamic imports that Vite can't pre-bundle cleanly
+  optimizeDeps: {
+    exclude: ['pdfjs-dist'],
+  },
 })

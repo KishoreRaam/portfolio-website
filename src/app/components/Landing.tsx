@@ -14,6 +14,8 @@ import { BookOpen, Heart, AlertTriangle, ShieldCheck } from "lucide-react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ScrollSmoother } from "gsap/ScrollSmoother";
+import { SkillsSection } from "./SkillsSection";
+import { ResumePlane } from "./ResumePlane";
 
 gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
 
@@ -447,6 +449,12 @@ export default function Landing() {
           <ExpandingCards items={PROJECTS} />
         </section>
       </div>
+
+      {/* Skills horizontal scroll */}
+      <SkillsSection />
+
+      {/* Resume plane CTA */}
+      <ResumePlane />
 
           </div>
         </div>
