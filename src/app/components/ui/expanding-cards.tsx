@@ -2,6 +2,7 @@ import * as React from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { HEADING_GLYPHS, HEADING_VIEWBOX } from "./headingPaths";
+import { ProjectCard } from "@/components/ui/project-card";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -243,41 +244,27 @@ export function ExpandingCards({ items }: ExpandingCardsProps) {
   /* ──────────────────── RENDER ──────────────────── */
   const headStroke = 2.6;
 
-  /* ── Mobile static list ── */
+  /* ── Mobile: ProjectCard grid ── */
   if (!isDesktop) {
     return (
       <div style={{ backgroundColor: "#0F0F0F", padding: "56px 20px 72px" }}>
-        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "3px", color: "#555", textTransform: "uppercase", margin: "0 0 18px", fontFamily: "Inter, sans-serif" }}>
+        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "3px", color: "#555", textTransform: "uppercase", margin: "0 0 14px", fontFamily: "Inter, sans-serif" }}>
           Selected Work
         </p>
-        <h2 style={{ fontFamily: "'Young Serif', serif", fontSize: 38, fontWeight: 400, color: "#f0ede6", lineHeight: 1.1, margin: "0 0 44px" }}>
+        <h2 style={{ fontFamily: "'Young Serif', serif", fontSize: 36, fontWeight: 400, color: "#f0ede6", lineHeight: 1.1, margin: "0 0 36px" }}>
           Projects that speak for themselves
         </h2>
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          {items.map((item, i) => (
-            <a
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}>
+          {items.map((item) => (
+            <ProjectCard
               key={item.id}
-              href={item.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ display: "block", textDecoration: "none", paddingTop: i === 0 ? 0 : 36, paddingBottom: 36, borderBottom: i < items.length - 1 ? "1px solid rgba(255,255,255,0.07)" : "none" }}
-            >
-              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}>
-                <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 11, letterSpacing: "2px", textTransform: "uppercase", fontFamily: "Inter, sans-serif" }}>
-                  {String(i + 1).padStart(2, "0")} — {item.tag}
-                </span>
-                <span style={{ color: "#D5E636", fontSize: 11, fontFamily: "Inter, sans-serif", letterSpacing: "1px" }}>{item.year}</span>
-              </div>
-              <h3 style={{ color: "#fff", fontSize: 28, fontFamily: "'Young Serif', serif", fontWeight: 400, margin: "0 0 14px", lineHeight: 1.1 }}>
-                {item.title}
-              </h3>
-              <div style={{ borderRadius: 12, overflow: "hidden", height: 200, marginBottom: 14 }}>
-                <img src={item.imgSrc} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              </div>
-              <p style={{ color: "rgba(255,255,255,0.48)", fontSize: 13, lineHeight: 1.7, fontFamily: "Inter, sans-serif", margin: 0 }}>
-                {item.description}
-              </p>
-            </a>
+              imgSrc={item.imgSrc}
+              title={item.title}
+              description={item.description}
+              tag={item.tag}
+              year={item.year}
+              link={item.url ?? "#"}
+            />
           ))}
         </div>
       </div>
