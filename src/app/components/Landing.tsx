@@ -113,12 +113,32 @@ function glassNavStyle(scrolled: boolean) {
 function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("");
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 72);
+    const onScroll = () => {
+      setScrolled(window.scrollY > 72);
+      const sects = NAV_LINKS.map(id => document.getElementById(id)).filter(Boolean) as HTMLElement[];
+      let current = "";
+      for (const s of sects) {
+        if (s.getBoundingClientRect().top <= 120) current = s.id;
+      }
+      setActiveSection(current);
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const scrollTo = (id: string) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const smoother = ScrollSmoother.get();
+    if (smoother) {
+      smoother.scrollTo(el, true, "top 80px");
+    } else {
+      el.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   return (
     <>
@@ -161,15 +181,29 @@ function Navbar() {
             </span>
           </div>
 
-          {/* Links — always centered */}
-          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 36 }}>
+          {/* Links — spread evenly */}
+          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "space-evenly" }}>
             {NAV_LINKS.map((link) => (
               <a key={link} href={`#${link}`}
-                style={{ color: "#4A4A4A", fontSize: 14, fontWeight: 500, textDecoration: "none", fontFamily: "Inter, sans-serif", whiteSpace: "nowrap", transition: "color 0.2s" }}
-                onMouseEnter={(e) => ((e.target as HTMLElement).style.color = "#000")}
-                onMouseLeave={(e) => ((e.target as HTMLElement).style.color = "#4A4A4A")}
+                onClick={(e) => { e.preventDefault(); scrollTo(link); }}
+                style={{
+                  color: activeSection === link ? "#1A1A1A" : "#4A4A4A",
+                  fontSize: 16, fontWeight: activeSection === link ? 600 : 500,
+                  textDecoration: "none", fontFamily: "Inter, sans-serif",
+                  whiteSpace: "nowrap", transition: "color 0.25s, font-weight 0.25s",
+                  position: "relative", display: "inline-block", paddingBottom: 6,
+                }}
+                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#000")}
+                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = activeSection === link ? "#1A1A1A" : "#4A4A4A")}
               >
                 {link}
+                <span style={{
+                  position: "absolute", bottom: 0, left: "50%",
+                  transform: "translateX(-50%)",
+                  height: 2, borderRadius: 1, backgroundColor: "#1A1A1A",
+                  width: activeSection === link ? "100%" : 0,
+                  transition: "width 0.3s cubic-bezier(0.4,0,0.2,1)",
+                }} />
               </a>
             ))}
           </div>
@@ -192,12 +226,68 @@ function Navbar() {
         </div>
       </div>
 
-      {/* ── Mobile ── */}
+      {/* ── Mobile Full-Screen Overlay ── */}
+      <div
+        className="md:hidden"
+        style={{
+          position: "fixed",
+          top: 0, left: 0,
+          width: "100%",
+          height: "100dvh",
+          background: "#E8572A",
+          zIndex: 198,
+          clipPath: menuOpen ? "inset(0% 0% 0% 0%)" : "inset(100% 0% 0% 0%)",
+          transition: "clip-path 0.55s cubic-bezier(0.77,0,0.175,1)",
+          pointerEvents: menuOpen ? "auto" : "none",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <nav style={{ textAlign: "center" }}>
+          {NAV_LINKS.map((link, i) => (
+            <a
+              key={link}
+              href={`#${link}`}
+              onClick={(e) => { e.preventDefault(); setMenuOpen(false); scrollTo(link); }}
+              style={{
+                display: "block",
+                fontFamily: "Inter, sans-serif",
+                fontSize: "clamp(2.6rem, 13vw, 4.2rem)",
+                fontWeight: 900,
+                color: "#1A1A1A",
+                textDecoration: "none",
+                textTransform: "uppercase",
+                lineHeight: 1.2,
+                letterSpacing: "-0.02em",
+                opacity: menuOpen ? 1 : 0,
+                transform: menuOpen ? "translateY(0)" : "translateY(28px)",
+                transition: `opacity 0.4s ease ${menuOpen ? 0.12 + i * 0.06 : 0}s, transform 0.4s ease ${menuOpen ? 0.12 + i * 0.06 : 0}s`,
+              }}
+            >
+              {link}
+            </a>
+          ))}
+        </nav>
+        <div style={{
+          position: "absolute",
+          bottom: 32,
+          fontFamily: "Inter, sans-serif",
+          fontSize: 13,
+          color: "#1A1A1A",
+          opacity: menuOpen ? 0.55 : 0,
+          transition: `opacity 0.4s ease ${menuOpen ? 0.4 : 0}s`,
+        }}>
+          kishoreraammskj@gmail.com
+        </div>
+      </div>
+
+      {/* ── Mobile Navbar Bar ── */}
       <div
         className="md:hidden"
         style={{ position: "fixed", top: 14, left: "50%", transform: "translateX(-50%)", width: "calc(100% - 32px)", maxWidth: 420, zIndex: 200 }}
       >
-        {/* Pill bar */}
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
           borderRadius: 100, height: 52, padding: "0 8px 0 22px",
@@ -206,53 +296,30 @@ function Navbar() {
           <span style={{ fontFamily: "Inter, sans-serif", fontSize: 17, fontWeight: 800, color: "#000" }}>RAAM</span>
           <button
             onClick={() => setMenuOpen((v) => !v)}
-            style={{ display: "flex", flexDirection: "column", gap: 5, padding: "10px 14px", background: "none", border: "none", cursor: "pointer" }}
+            style={{
+              display: "flex", alignItems: "center", gap: 7,
+              background: "#1A1A1A", color: "#fff",
+              border: "none", borderRadius: 100,
+              padding: "8px 10px 8px 16px",
+              fontSize: 11, fontWeight: 700, letterSpacing: 1,
+              cursor: "pointer", fontFamily: "Inter, sans-serif",
+            }}
             aria-label="Menu"
           >
-            {[0, 1, 2].map((i) => (
-              <div key={i} style={{
-                width: 20, height: 2, borderRadius: 1,
-                background: "#000",
-                transition: "transform 0.25s, opacity 0.25s",
-                transform: menuOpen
-                  ? i === 0 ? "translateY(7px) rotate(45deg)"
-                  : i === 2 ? "translateY(-7px) rotate(-45deg)"
-                  : "scaleX(0)"
-                  : "none",
-                opacity: menuOpen && i === 1 ? 0 : 1,
-              }} />
-            ))}
+            MENU
+            <span style={{
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+              width: 22, height: 22,
+              background: "rgba(255,255,255,0.15)",
+              borderRadius: 6,
+              fontSize: 16, lineHeight: 1,
+              transition: "transform 0.35s cubic-bezier(0.4,0,0.2,1)",
+              transform: menuOpen ? "rotate(0deg)" : "rotate(45deg)",
+            }}>
+              ×
+            </span>
           </button>
         </div>
-
-        {/* Dropdown */}
-        {menuOpen && (
-          <div style={{
-            marginTop: 8, borderRadius: 20,
-            background: "rgba(255,255,255,0.95)",
-            backdropFilter: "blur(14px)",
-            WebkitBackdropFilter: "blur(14px)",
-            boxShadow: "0 4px 24px rgba(0,0,0,0.10)",
-            overflow: "hidden",
-          }}>
-            {NAV_LINKS.map((link) => (
-              <a key={link} href={`#${link}`} onClick={() => setMenuOpen(false)}
-                style={{ display: "block", padding: "14px 24px", color: "#1A1A1A", fontSize: 15, fontWeight: 500, textDecoration: "none", fontFamily: "Inter, sans-serif" }}
-              >
-                {link}
-              </a>
-            ))}
-            <div style={{ padding: "12px 16px 16px" }}>
-              <button style={{
-                width: "100%", background: "#1A1A1A", color: "#D5E636", border: "none",
-                borderRadius: 100, padding: "14px 24px", fontSize: 14, fontWeight: 700,
-                cursor: "pointer", fontFamily: "Inter, sans-serif",
-              }}>
-                LET'S TALK
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </>
   );
@@ -307,7 +374,7 @@ export default function Landing() {
       <Navbar />
       <div id="smooth-wrapper">
         <div id="smooth-content">
-          <div style={{ backgroundColor: "#EDEDE5", fontFamily: "Inter, sans-serif" }}>
+          <div id="about" style={{ backgroundColor: "#EDEDE5", fontFamily: "Inter, sans-serif" }}>
 
       {/* ════ DESKTOP ════ */}
       <div className="hidden md:block" style={{ maxWidth: 1440, margin: "0 auto", paddingTop: 100 }}>
@@ -427,7 +494,9 @@ export default function Landing() {
       <SkillsSection />
 
       {/* Resume plane CTA */}
-      <ResumePlane />
+      <div id="contact">
+        <ResumePlane />
+      </div>
 
           </div>
         </div>
