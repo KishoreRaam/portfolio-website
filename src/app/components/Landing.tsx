@@ -16,6 +16,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ScrollSmoother } from "gsap/ScrollSmoother";
 import { SkillsSection } from "./SkillsSection";
 import { ResumePlane } from "./ResumePlane";
+import { ContactFooter } from "./ContactFooter";
 
 gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
 
@@ -359,6 +360,10 @@ export default function Landing() {
   // and all ScrollTrigger animations stay in sync. Skipped for reduced motion.
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // ScrollSmoother uses CSS transforms — CSS sticky and position:fixed children
+    // lose viewport anchoring inside a transform ancestor. On mobile, native
+    // momentum scroll is smoother anyway and sticky layout works correctly.
+    if (window.innerWidth < 768) return;
     const smoother = ScrollSmoother.create({
       wrapper: "#smooth-wrapper",
       content: "#smooth-content",
@@ -494,11 +499,14 @@ export default function Landing() {
       <SkillsSection />
 
       {/* Resume plane CTA */}
-      <div id="contact">
+      <div>
         <ResumePlane />
       </div>
 
           </div>
+          <section id="contact">
+            <ContactFooter />
+          </section>
         </div>
       </div>
     </>
