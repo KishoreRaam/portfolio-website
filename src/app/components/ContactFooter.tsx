@@ -8,7 +8,7 @@ import {
 /* ── Social rows ─────────────────────────────────────────── */
 const SOCIALS = [
   {
-    index: "01", label: "Instagram", handle: "@kishoreraam_here", tag: "Photos",
+    index: "01", label: "Instagram", handle: "@kishoreraam_here", tag: "Personal",
     href: "https://www.instagram.com/kishoreraam_here/", target: "_blank",
     color: "#C13584", rowBgHover: "rgba(193,53,132,0.05)", tagBgHover: "rgba(193,53,132,0.10)",
     Icon: Instagram,
@@ -460,7 +460,7 @@ export function ContactFooter() {
             ©2026 Kishoreraam. All rights reserved.
           </span>
           <span style={{ fontSize: 12, color: "rgba(245,240,232,0.45)", fontFamily: "'DM Sans', sans-serif" }}>
-            Built from Coimbatore with <span style={{ color: "#D5E636" }}>✦</span>
+            Built from Tamilnadu with <span style={{ color: "#D5E636" }}>✦</span>
           </span>
         </div>
       </footer>
