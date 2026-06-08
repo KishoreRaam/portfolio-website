@@ -69,7 +69,7 @@ const PROJECTS: CardItem[] = [
     title: "StudentsHub",
     tag: "Web App · React",
     year: "2025",
-    description: "Centralized platform for students to discover resources, tools and opportunities. Won PitchFest 2025 — advanced to Smart India Hackathon as Team Learnex.",
+    description: "Centralized platform for students to discover resources, tools and opportunities. Won PitchFest 2025 — has helped Students Explore and be aware of Ai tools.",
     imgSrc: studentsHubImg,
     url: "https://studentperks.in",
     icon: <BookOpen size={26} />,
