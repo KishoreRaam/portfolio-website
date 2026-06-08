@@ -1,13 +1,9 @@
 import React, { useRef, useEffect, useState } from "react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   Instagram, Linkedin, Mail, Twitter,
   Cpu, Pencil, Music, Code2, BookOpen,
   Coffee, Clapperboard, Camera, Monitor, Palette, PersonStanding,
 } from "lucide-react";
-
-gsap.registerPlugin(ScrollTrigger);
 
 /* ── Social rows ─────────────────────────────────────────── */
 const SOCIALS = [
@@ -37,9 +33,7 @@ const SOCIALS = [
   },
 ];
 
-/* ── Interest icons in the gradient zone ─────────────────── */
-// Outer div = static rotation · Inner div = float animation
-// so neither transform clobbers the other.
+/* ── Interest icons — gradient footer zone ───────────────── */
 const INTEREST_ICONS: {
   Icon: React.ElementType;
   top: string; left: string;
@@ -58,19 +52,30 @@ const INTEREST_ICONS: {
   { Icon: Monitor,        top: "65%", left: "77%", rotate: 4,   dur: 3.8, delay: 0.9 },
 ];
 
+/* ── Helpers ─────────────────────────────────────────────── */
+// Returns the CSS transition string for a staggered entrance.
+function entranceTrans(visible: boolean, delay: number, duration = 0.7) {
+  if (!visible) return "none";
+  return `opacity ${duration}s ease ${delay}s, transform ${duration}s cubic-bezier(0.22,1,0.36,1) ${delay}s`;
+}
+
+// Common hidden / visible style objects.
+const hidden  = { opacity: 0, transform: "translateY(44px)" } as const;
+const visible = { opacity: 1, transform: "translateY(0)"    } as const;
+
 /* ── Component ───────────────────────────────────────────── */
 export function ContactFooter() {
   const canvasRef      = useRef<HTMLCanvasElement>(null);
   const sectionRef     = useRef<HTMLDivElement>(null);
-  const headTagRef     = useRef<HTMLParagraphElement>(null);
   const headlineRef    = useRef<HTMLHeadingElement>(null);
-  const subtextRef     = useRef<HTMLParagraphElement>(null);
-  const ctaRowRef      = useRef<HTMLDivElement>(null);
   const socialsListRef = useRef<HTMLDivElement>(null);
   const footerRef      = useRef<HTMLElement>(null);
 
-  const [isMobile,    setIsMobile]    = useState(false);
-  const [hoveredRow,  setHoveredRow]  = useState<number | null>(null);
+  const [isMobile,       setIsMobile]       = useState(false);
+  const [hoveredRow,     setHoveredRow]      = useState<number | null>(null);
+  const [sectionVisible, setSectionVisible]  = useState(false);
+  const [socialsVisible, setSocialsVisible]  = useState(false);
+  const [footerVisible,  setFooterVisible]   = useState(false);
 
   /* responsive breakpoint */
   useEffect(() => {
@@ -80,7 +85,30 @@ export function ContactFooter() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  /* ── paper-plane canvas ── */
+  /* IntersectionObserver — no GSAP, no DOM-ownership conflict */
+  useEffect(() => {
+    const make = (cb: () => void, threshold = 0.12) =>
+      new IntersectionObserver(
+        ([e]) => { if (e.isIntersecting) { cb(); obs.disconnect(); } },
+        { threshold }
+      );
+
+    const obs1 = make(() => setSectionVisible(true));
+    const obs2 = make(() => setSocialsVisible(true));
+    const obs3 = make(() => setFooterVisible(true),  0.05);
+
+    if (sectionRef.current)     obs1.observe(sectionRef.current);
+    if (socialsListRef.current) obs2.observe(socialsListRef.current);
+    if (footerRef.current)      obs3.observe(footerRef.current);
+
+    // Keep a stable reference so the closure captures the right obs for disconnect
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const obs = obs1; // only used for the inline disconnect pattern above; each obs disconnects itself
+
+    return () => { obs1.disconnect(); obs2.disconnect(); obs3.disconnect(); };
+  }, []);
+
+  /* paper-plane canvas animation */
   useEffect(() => {
     const canvas  = canvasRef.current;
     const section = sectionRef.current;
@@ -113,41 +141,29 @@ export function ContactFooter() {
 
     const drawPlane = (x: number, y: number, ang: number) => {
       ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(ang);
-      ctx.fillStyle = "#1A1A1A";
-      ctx.beginPath(); ctx.moveTo(20,0); ctx.lineTo(-10,-5); ctx.lineTo(-8,0); ctx.lineTo(-10,5); ctx.closePath(); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(-1,0); ctx.lineTo(-13,-11); ctx.lineTo(-16,-10); ctx.lineTo(-10,0); ctx.closePath(); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(3,0);  ctx.lineTo(-7,8);   ctx.lineTo(-10,8);  ctx.lineTo(-6,0);  ctx.closePath(); ctx.fill();
+      ctx.translate(x, y); ctx.rotate(ang); ctx.fillStyle = "#1A1A1A";
+      ctx.beginPath(); ctx.moveTo(20,0);  ctx.lineTo(-10,-5); ctx.lineTo(-8,0);  ctx.lineTo(-10,5); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-1,0);  ctx.lineTo(-13,-11);ctx.lineTo(-16,-10);ctx.lineTo(-10,0); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(3,0);   ctx.lineTo(-7,8);   ctx.lineTo(-10,8);  ctx.lineTo(-6,0);  ctx.closePath(); ctx.fill();
       ctx.restore();
     };
 
     const draw = () => {
       const W = canvas.width, H = canvas.height;
       ctx.clearRect(0, 0, W, H);
-
       const trailStart = Math.max(0, t - 0.55);
-      const startPt = pos(trailStart, W, H);
-      const endPt   = pos(Math.min(t, 1), W, H);
-      const grad = ctx.createLinearGradient(startPt.x, startPt.y, endPt.x, endPt.y);
-      grad.addColorStop(0, "rgba(26,26,26,0)");
-      grad.addColorStop(1, "rgba(26,26,26,0.28)");
-
+      const sp = pos(trailStart, W, H), ep = pos(Math.min(t,1), W, H);
+      const g = ctx.createLinearGradient(sp.x, sp.y, ep.x, ep.y);
+      g.addColorStop(0, "rgba(26,26,26,0)"); g.addColorStop(1, "rgba(26,26,26,0.28)");
       ctx.beginPath();
       for (let i = 0; i <= 100; i++) {
-        const p = trailStart + (i / 100) * (t - trailStart);
-        const { x, y } = pos(p, W, H);
-        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        const p = trailStart + (i/100) * (t - trailStart);
+        const {x,y} = pos(p,W,H);
+        if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
       }
-      ctx.strokeStyle = grad;
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([5, 5]);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      const { x, y } = pos(t, W, H);
-      drawPlane(x, y, getAngle(t, W, H));
-
+      ctx.strokeStyle = g; ctx.lineWidth = 1.5; ctx.setLineDash([5,5]); ctx.stroke(); ctx.setLineDash([]);
+      const {x,y} = pos(t,W,H);
+      drawPlane(x, y, getAngle(t,W,H));
       t += 0.001;
       if (t > 1.12) t = -0.05;
       animId = requestAnimationFrame(draw);
@@ -157,44 +173,7 @@ export function ContactFooter() {
     return () => { cancelAnimationFrame(animId); window.removeEventListener("resize", resize); };
   }, []);
 
-  /* ── scroll entrance animations ── */
-  useEffect(() => {
-    const triggers: ScrollTrigger[] = [];
-
-    const headerItems = [
-      headTagRef.current, headlineRef.current,
-      subtextRef.current, ctaRowRef.current,
-    ].filter((el): el is HTMLElement => el !== null);
-
-    if (headerItems.length && sectionRef.current) {
-      gsap.set(headerItems, { y: 48, opacity: 0 });
-      triggers.push(ScrollTrigger.create({
-        trigger: sectionRef.current, start: "top 78%", once: true,
-        onEnter: () => gsap.to(headerItems, { y: 0, opacity: 1, duration: 0.75, stagger: 0.1, ease: "power3.out" }),
-      }));
-    }
-
-    if (socialsListRef.current) {
-      const rows = Array.from(socialsListRef.current.querySelectorAll<HTMLElement>("a"));
-      gsap.set(rows, { y: 32, opacity: 0 });
-      triggers.push(ScrollTrigger.create({
-        trigger: socialsListRef.current, start: "top 82%", once: true,
-        onEnter: () => gsap.to(rows, { y: 0, opacity: 1, duration: 0.5, stagger: 0.09, ease: "power2.out" }),
-      }));
-    }
-
-    if (footerRef.current) {
-      gsap.set(footerRef.current, { y: 60, opacity: 0 });
-      triggers.push(ScrollTrigger.create({
-        trigger: footerRef.current, start: "top 90%", once: true,
-        onEnter: () => gsap.to(footerRef.current, { y: 0, opacity: 1, duration: 0.85, ease: "power3.out" }),
-      }));
-    }
-
-    return () => { triggers.forEach(t => t.kill()); };
-  }, []);
-
-  /* ── footer nav/social links ── */
+  /* footer nav/social link data */
   const navLinks = [
     { label: "About",   href: "#about"   },
     { label: "Work",    href: "#work"    },
@@ -207,7 +186,6 @@ export function ContactFooter() {
     { label: "X",         href: "https://x.com/kishoreraam3",                  target: "_blank" },
   ];
 
-  /* ── shared link hover helpers ── */
   const fadeOut = (e: React.MouseEvent) => { (e.currentTarget as HTMLElement).style.opacity = "0.45"; };
   const fadeIn  = (e: React.MouseEvent) => { (e.currentTarget as HTMLElement).style.opacity = "1"; };
 
@@ -231,31 +209,45 @@ export function ContactFooter() {
 
         <div style={{ position: "relative", zIndex: 2 }}>
 
-          <p ref={headTagRef} style={{
+          {/* Section tag */}
+          <p style={{
             fontSize: 11, fontWeight: 700, letterSpacing: "3px",
             textTransform: "uppercase", color: "#999",
             margin: "0 0 28px 0", fontFamily: "'DM Sans', sans-serif",
+            ...(!sectionVisible ? hidden : visible),
+            transition: entranceTrans(sectionVisible, 0),
           }}>
             04 — CONTACT
           </p>
 
-          <h2 ref={headlineRef} style={{
-            fontFamily: "'DM Serif Display', serif",
-            fontSize: isMobile ? 42 : 68, lineHeight: 0.93,
-            fontWeight: "normal", color: "#1A1A1A", margin: "0 0 28px 0",
-          }}>
+          {/* Headline */}
+            <h2 ref={headlineRef} style={{
+              fontFamily: "Averia Serif Libre, serif",
+              fontSize: isMobile ? 42 : 68, lineHeight: 0.93,
+              fontWeight: "normal", color: "#1A1A1A", margin: "0 0 28px 0",
+              ...(!sectionVisible ? hidden : visible),
+              transition: entranceTrans(sectionVisible, 0.1),
+            }}>
             Got something worth{" "}
             <em style={{ fontStyle: "italic", color: "#555" }}>building?</em>
           </h2>
 
-          <p ref={subtextRef} style={{
+          {/* Subtext */}
+          <p style={{
             fontSize: 16, color: "#666", lineHeight: 1.7,
             maxWidth: 420, margin: "0 0 56px 0",
+            ...(!sectionVisible ? hidden : visible),
+            transition: entranceTrans(sectionVisible, 0.2),
           }}>
             I'm open to internships, collabs, and builds that actually matter. Drop a line.
           </p>
 
-          <div ref={ctaRowRef} style={{ display: "flex", alignItems: "center", gap: 24, marginBottom: 80 }}>
+          {/* CTA row */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 24, marginBottom: 80,
+            ...(!sectionVisible ? hidden : visible),
+            transition: entranceTrans(sectionVisible, 0.3),
+          }}>
             <a
               href="mailto:kishoreraammskj@gmail.com"
               style={{
@@ -296,8 +288,15 @@ export function ContactFooter() {
                     borderBottom: "1px solid rgba(26,26,26,0.12)",
                     textDecoration: "none", color: "#1A1A1A",
                     position: "relative", overflow: "hidden",
-                    transition: "padding-left 0.25s ease, background-color 0.25s ease",
                     backgroundColor: hovered ? social.rowBgHover : "transparent",
+                    // entrance animation via CSS transition — no GSAP
+                    opacity:   socialsVisible ? 1 : 0,
+                    transform: socialsVisible ? "translateY(0)" : "translateY(32px)",
+                    transition: [
+                      entranceTrans(socialsVisible, i * 0.09, 0.5),
+                      "padding-left 0.25s ease",
+                      "background-color 0.25s ease",
+                    ].filter(Boolean).join(", "),
                   }}
                 >
                   {/* Brand accent bar */}
@@ -307,13 +306,9 @@ export function ContactFooter() {
                     zIndex: 0, transition: "width 0.3s ease",
                   }} />
 
-                  {/* Left: index + icon badge + name + handle */}
+                  {/* Left */}
                   <div style={{ display: "flex", alignItems: "center", gap: 18, zIndex: 1 }}>
-                    <span style={{
-                      fontSize: 11, color: "#bbb", fontWeight: 500,
-                      letterSpacing: "1px", minWidth: 20,
-                      fontFamily: "'DM Sans', sans-serif",
-                    }}>
+                    <span style={{ fontSize: 11, color: "#bbb", fontWeight: 500, letterSpacing: "1px", minWidth: 20, fontFamily: "'DM Sans', sans-serif" }}>
                       {social.index}
                     </span>
 
@@ -324,9 +319,7 @@ export function ContactFooter() {
                       background: hovered ? social.tagBgHover : "rgba(26,26,26,0.07)",
                       transition: "background 0.25s ease",
                     }}>
-                      <social.Icon
-                        size={17}
-                        strokeWidth={1.8}
+                      <social.Icon size={17} strokeWidth={1.8}
                         style={{ color: hovered ? social.color : "#555", transition: "color 0.25s ease" }}
                       />
                     </span>
@@ -344,7 +337,7 @@ export function ContactFooter() {
                     </span>
                   </div>
 
-                  {/* Right: tag pill + arrow */}
+                  {/* Right */}
                   <div style={{ display: "flex", alignItems: "center", gap: 12, zIndex: 1 }}>
                     <span style={{
                       fontSize: 10, fontWeight: 700, letterSpacing: "2px",
@@ -374,8 +367,13 @@ export function ContactFooter() {
       </div>
 
       {/* ════ FOOTER ════ */}
-      <footer ref={footerRef}>
-
+      <footer
+        ref={footerRef}
+        style={{
+          ...(!footerVisible ? { opacity: 0, transform: "translateY(60px)" } : { opacity: 1, transform: "translateY(0)" }),
+          transition: entranceTrans(footerVisible, 0, 0.85),
+        }}
+      >
         {/* Part A — Info grid */}
         <div style={{
           borderTop: "1px solid rgba(26,26,26,0.15)",
@@ -385,7 +383,6 @@ export function ContactFooter() {
           gridTemplateColumns: isMobile ? "1fr 1fr" : "120px 1fr 1fr 1fr",
           gap: isMobile ? "24px 16px" : "0",
         }}>
-          {/* Menu */}
           <div>
             <p style={{ fontSize: 11, color: "#999", letterSpacing: "0.5px", margin: "0 0 18px", fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase" }}>(MENU)</p>
             {navLinks.map(l => (
@@ -397,7 +394,6 @@ export function ContactFooter() {
             ))}
           </div>
 
-          {/* Socials */}
           <div>
             <p style={{ fontSize: 11, color: "#999", letterSpacing: "0.5px", margin: "0 0 18px", fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase" }}>(SOCIALS)</p>
             {socialLinks.map(l => (
@@ -409,10 +405,8 @@ export function ContactFooter() {
             ))}
           </div>
 
-          {/* Spacer (desktop only) */}
           {!isMobile && <div />}
 
-          {/* Email */}
           <div style={{ textAlign: isMobile ? "left" : "right" }}>
             <p style={{ fontSize: 11, color: "#999", letterSpacing: "0.5px", margin: "0 0 18px", fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", textAlign: isMobile ? "left" : "right" }}>(SAY "HELLO")</p>
             <a href="mailto:kishoreraammskj@gmail.com"
@@ -430,7 +424,6 @@ export function ContactFooter() {
           position: "relative",
           overflow: "hidden",
         }}>
-          {/* Scattered interest icons */}
           {INTEREST_ICONS.map(({ Icon, top, left, rotate, dur, delay }, i) => (
             <div key={i} style={{
               position: "absolute", top, left,
