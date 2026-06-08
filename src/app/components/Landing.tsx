@@ -13,12 +13,11 @@ import { TransitionBand } from "./TransitionBand";
 import { BookOpen, Heart, AlertTriangle, ShieldCheck } from "lucide-react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { ScrollSmoother } from "gsap/ScrollSmoother";
 import { SkillsSection } from "./SkillsSection";
 import { ResumePlane } from "./ResumePlane";
 import { ContactFooter } from "./ContactFooter";
 
-gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
+gsap.registerPlugin(ScrollTrigger);
 
 const NAV_LINKS = ["about", "work", "skills", "contact"];
 
@@ -110,6 +109,14 @@ function glassNavStyle(scrolled: boolean) {
   } as React.CSSProperties;
 }
 
+function scrollToSection(id: string) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const offsetTop = el.getBoundingClientRect().top + window.scrollY - 80;
+  const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+  window.scrollTo({ top: Math.max(offsetTop, 0), behavior });
+}
+
 /* ─── Navbar ─── */
 function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -131,22 +138,11 @@ function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const scrollTo = (id: string) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    const smoother = ScrollSmoother.get();
-    if (smoother) {
-      smoother.scrollTo(el, true, "top 80px");
-    } else {
-      el.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
   // Mobile nav: flash the orange overlay, then scroll
   const mobileNavClick = (link: string) => {
     setMenuOpen(false);
     setNavTransition(true);
-    setTimeout(() => scrollTo(link), 240);
+    setTimeout(() => scrollToSection(link), 240);
     setTimeout(() => setNavTransition(false), 640);
   };
 
@@ -206,7 +202,7 @@ function Navbar() {
           <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "space-evenly" }}>
             {NAV_LINKS.map((link) => (
               <a key={link} href={`#${link}`}
-                onClick={(e) => { e.preventDefault(); scrollTo(link); }}
+                onClick={(e) => { e.preventDefault(); scrollToSection(link); }}
                 style={{
                   color: activeSection === link ? "#1A1A1A" : "#4A4A4A",
                   fontSize: 16, fontWeight: activeSection === link ? 600 : 500,
@@ -376,30 +372,10 @@ function MobilePill({ children }: { children: string }) {
 
 /* ─── Page ─── */
 export default function Landing() {
-  // Smooth scrolling — the scroll position eases toward the user's input,
-  // and all ScrollTrigger animations stay in sync. Skipped for reduced motion.
-  useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    // ScrollSmoother uses CSS transforms — CSS sticky and position:fixed children
-    // lose viewport anchoring inside a transform ancestor. On mobile, native
-    // momentum scroll is smoother anyway and sticky layout works correctly.
-    if (window.innerWidth < 768) return;
-    const smoother = ScrollSmoother.create({
-      wrapper: "#smooth-wrapper",
-      content: "#smooth-content",
-      smooth: 1.8,
-      effects: true,
-    });
-    return () => { smoother.kill(); };
-  }, []);
-
   return (
     <>
-      {/* Navbar lives outside #smooth-content so position:fixed stays anchored to the viewport */}
       <Navbar />
-      <div id="smooth-wrapper">
-        <div id="smooth-content">
-          <div id="about" style={{ backgroundColor: "#EDEDE5", fontFamily: "Inter, sans-serif" }}>
+      <div id="about" style={{ backgroundColor: "#EDEDE5", fontFamily: "Inter, sans-serif" }}>
 
       {/* ════ DESKTOP ════ */}
       <div className="hidden md:block" style={{ maxWidth: 1440, margin: "0 auto", paddingTop: 100 }}>
@@ -434,7 +410,7 @@ export default function Landing() {
             {/* CTA */}
             <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
               <button
-                onClick={() => scrollTo("contact")}
+                onClick={() => scrollToSection("contact")}
                 style={{
                   backgroundColor: "#D5E636", color: "#1A1A1A", borderRadius: 100,
                   padding: "18px 40px", fontSize: 16, fontWeight: 700, letterSpacing: 0.5,
@@ -496,7 +472,7 @@ export default function Landing() {
         {/* CTA */}
         <div style={{ padding: "8px 20px 52px", display: "flex", flexDirection: "column", gap: 16 }}>
           <button
-            onClick={() => scrollTo("contact")}
+            onClick={() => scrollToSection("contact")}
             style={{
               backgroundColor: "#D5E636", color: "#1A1A1A", borderRadius: 100,
               padding: "16px 32px", fontSize: 15, fontWeight: 700, letterSpacing: 0.5,
@@ -526,12 +502,9 @@ export default function Landing() {
       <div>
         <ResumePlane />
       </div>
-
-          </div>
-          <section id="contact">
-            <ContactFooter />
-          </section>
-        </div>
+      <section id="contact">
+        <ContactFooter />
+      </section>
       </div>
     </>
   );

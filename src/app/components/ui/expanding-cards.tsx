@@ -99,48 +99,55 @@ export function ExpandingCards({ items }: ExpandingCardsProps) {
     const row   = rowRef.current;
     if (!track || !row) return;
 
-    const cards = cardRefs.current.filter(Boolean) as HTMLDivElement[];
-    if (cards.length !== items.length) return;
+    const ctx = gsap.context(() => {
+      const cards = cardRefs.current.filter(Boolean) as HTMLDivElement[];
+      if (cards.length !== items.length) return;
 
-    const INACTIVE = 72;
-    const GAP      = 12;
-    const getActiveW = () =>
-      row.offsetWidth - (items.length - 1) * (INACTIVE + GAP);
+      const INACTIVE = 72;
+      const GAP      = 12;
+      const getActiveW = () =>
+        row.offsetWidth - (items.length - 1) * (INACTIVE + GAP);
 
-    const initWidths = () => {
-      const aw = getActiveW();
-      cards.forEach((c, i) => gsap.set(c, { width: i === 0 ? aw : INACTIVE }));
-    };
-    initWidths();
-
-    const qw = cards.map((c) =>
-      gsap.quickTo(c, "width", { duration: 0.65, ease: "power3.inOut" }),
-    );
-
-    let prev = 0;
-    const st = ScrollTrigger.create({
-      trigger: track,
-      start: "top top",
-      end: "bottom bottom",
-      pin: pinRef.current,
-      pinSpacing: false,
-      pinType: "transform",
-      anticipatePin: 1,
-      onUpdate(self) {
-        drawHeading(self.progress);
-        const cardP = (self.progress - WRITE_FRACTION) / (1 - WRITE_FRACTION);
-        const step = Math.min(Math.floor(Math.max(cardP, 0) * items.length), items.length - 1);
-        if (step === prev) return;
-        prev = step;
-        setActive(step);
+      const initWidths = () => {
         const aw = getActiveW();
-        cards.forEach((_, i) => qw[i](i === step ? aw : INACTIVE));
-      },
-    });
+        cards.forEach((c, i) => gsap.set(c, { width: i === 0 ? aw : INACTIVE }));
+      };
+      initWidths();
 
-    const onResize = () => { initWidths(); ScrollTrigger.refresh(); };
-    window.addEventListener("resize", onResize);
-    return () => { st.kill(); window.removeEventListener("resize", onResize); };
+      const qw = cards.map((c) =>
+        gsap.quickTo(c, "width", { duration: 0.65, ease: "power3.inOut" }),
+      );
+
+      let prev = 0;
+      const st = ScrollTrigger.create({
+        trigger: track,
+        start: "top top",
+        end: "bottom bottom",
+        pin: pinRef.current,
+        pinSpacing: false,
+        anticipatePin: 1,
+        onUpdate(self) {
+          drawHeading(self.progress);
+          const cardP = (self.progress - WRITE_FRACTION) / (1 - WRITE_FRACTION);
+          const step = Math.min(Math.floor(Math.max(cardP, 0) * items.length), items.length - 1);
+          if (step === prev) return;
+          prev = step;
+          setActive(step);
+          const aw = getActiveW();
+          cards.forEach((_, i) => qw[i](i === step ? aw : INACTIVE));
+        },
+      });
+
+      const onResize = () => { initWidths(); ScrollTrigger.refresh(); };
+      window.addEventListener("resize", onResize);
+
+      return () => {
+        window.removeEventListener("resize", onResize);
+        st.kill();
+      };
+    }, track);
+
+    return () => ctx.revert();
   }, [isDesktop, items.length]);
 
   /* ── Mobile: no animation ── */

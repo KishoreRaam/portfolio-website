@@ -13,3 +13,13 @@
   68%  { transform: translateY(-5px); }
   100% { transform: translateY(0px); }
 }
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
