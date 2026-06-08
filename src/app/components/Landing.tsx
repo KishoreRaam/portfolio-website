@@ -115,6 +115,7 @@ function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("");
+  const [navTransition, setNavTransition] = useState(false);
 
   useEffect(() => {
     const onScroll = () => {
@@ -141,8 +142,27 @@ function Navbar() {
     }
   };
 
+  // Mobile nav: flash the orange overlay, then scroll
+  const mobileNavClick = (link: string) => {
+    setMenuOpen(false);
+    setNavTransition(true);
+    setTimeout(() => scrollTo(link), 240);
+    setTimeout(() => setNavTransition(false), 640);
+  };
+
   return (
     <>
+      {/* Mobile nav transition overlay — sits behind the orange menu (z 198) so the
+          menu slides up revealing it, then it fades away exposing the new section */}
+      <div style={{
+        position: "fixed", inset: 0,
+        background: "#E8572A",
+        zIndex: 196,
+        opacity: navTransition ? 1 : 0,
+        pointerEvents: "none",
+        transition: navTransition ? "opacity 0.18s ease" : "opacity 0.32s ease 0.08s",
+      }} />
+
       {/* ── Desktop ── */}
       <div
         className="hidden md:block"
@@ -251,7 +271,7 @@ function Navbar() {
             <a
               key={link}
               href={`#${link}`}
-              onClick={(e) => { e.preventDefault(); setMenuOpen(false); scrollTo(link); }}
+              onClick={(e) => { e.preventDefault(); mobileNavClick(link); }}
               style={{
                 display: "block",
                 fontFamily: "Inter, sans-serif",
@@ -413,11 +433,13 @@ export default function Landing() {
 
             {/* CTA */}
             <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-              <button style={{
-                backgroundColor: "#D5E636", color: "#1A1A1A", borderRadius: 100,
-                padding: "18px 40px", fontSize: 16, fontWeight: 700, letterSpacing: 0.5,
-                border: "none", cursor: "pointer", whiteSpace: "nowrap",
-              }}>
+              <button
+                onClick={() => scrollTo("contact")}
+                style={{
+                  backgroundColor: "#D5E636", color: "#1A1A1A", borderRadius: 100,
+                  padding: "18px 40px", fontSize: 16, fontWeight: 700, letterSpacing: 0.5,
+                  border: "none", cursor: "pointer", whiteSpace: "nowrap",
+                }}>
                 START WITH A CALL
               </button>
               <span style={{ color: "#4A4A4A", fontSize: 16 }}>let's make sure you get heard...</span>
@@ -473,11 +495,13 @@ export default function Landing() {
 
         {/* CTA */}
         <div style={{ padding: "8px 20px 52px", display: "flex", flexDirection: "column", gap: 16 }}>
-          <button style={{
-            backgroundColor: "#D5E636", color: "#1A1A1A", borderRadius: 100,
-            padding: "16px 32px", fontSize: 15, fontWeight: 700, letterSpacing: 0.5,
-            border: "none", cursor: "pointer",
-          }}>
+          <button
+            onClick={() => scrollTo("contact")}
+            style={{
+              backgroundColor: "#D5E636", color: "#1A1A1A", borderRadius: 100,
+              padding: "16px 32px", fontSize: 15, fontWeight: 700, letterSpacing: 0.5,
+              border: "none", cursor: "pointer",
+            }}>
             LET'S TALK
           </button>
           <span style={{ color: "#4A4A4A", fontSize: 14 }}>let's make sure you get heard...</span>
