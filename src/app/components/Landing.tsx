@@ -5,12 +5,12 @@ import professionalImg from "../../images/professional.jpeg";
 import roadSOSImg     from "../../images/roadsos.png";
 import studentsHubImg from "../../images/studentshub.png";
 import bloodLinkImg   from "../../images/bloodlink.png";
-import muleImg        from "../../images/mule.png";
+import kaaniImg       from "../../images/kaani.jpg";
 import { ExpandingCards } from "./ui/expanding-cards";
 import type { CardItem } from "./ui/expanding-cards";
 import { HeroVisual } from "./HeroVisual";
 import { TransitionBand } from "./TransitionBand";
-import { BookOpen, Heart, AlertTriangle, ShieldCheck } from "lucide-react";
+import { BookOpen, Heart, AlertTriangle, MapPin } from "lucide-react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SkillsSection } from "./SkillsSection";
@@ -85,14 +85,14 @@ const PROJECTS: CardItem[] = [
     icon: <Heart size={26} />,
   },
   {
-    id: "fraud-detection",
-    title: "Fraud Detection",
-    tag: "ML · Python",
-    year: "2025",
-    description: "End-to-end ML pipeline for flagging fraudulent transactions — risk scoring, classification models, and anomaly detection with a web-accessible result interface.",
-    imgSrc: muleImg,
-    url: "https://cross-mule.vercel.app/",
-    icon: <ShieldCheck size={26} />,
+    id: "kaani",
+    title: "Kaani",
+    tag: "Full Stack · Computer Vision",
+    year: "2026",
+    description: "Two-sided real estate marketplace for Tamil Nadu that turns static DTCP-approved layout sketches into interactive, clickable SVG plot maps using OpenCV contour extraction and Claude Vision — so buyers see real plot boundaries, pricing and details instead of tabular listings.",
+    imgSrc: kaaniImg,
+    url: "https://real-estate-e-commercee.vercel.app/",
+    icon: <MapPin size={26} />,
   },
 ];
 
